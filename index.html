@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polish ↔ Cyrillic Converter with Grok API</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f0f0f0; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); width: 500px; text-align: center; }
+        h1 { font-size: 24px; margin-bottom: 20px; }
+        textarea { width: 100%; height: 100px; margin-bottom: 10px; padding: 10px; font-size: 16px; resize: none; border: 1px solid #ccc; border-radius: 4px; }
+        .buttons { margin: 10px 0; }
+        button { padding: 10px 20px; margin: 0 5px; font-size: 14px; border: none; border-radius: 4px; cursor: pointer; background-color: #4CAF50; color: white; }
+        button:hover { background-color: #45a049; }
+        #verifyButton { background-color: #FF9800; }
+        #verifyButton:hover { background-color: #F57C00; }
+        #copyButton { background-color: #2196F3; }
+        #copyButton:hover { background-color: #1976D2; }
+        #clearButton { background-color: #f44336; }
+        #clearButton:hover { background-color: #d32f2f; }
+        #output { background-color: #f9f9f9; }
+        .loading { display: none; color: #666; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Polish ↔ Cyrillic Converter with Grok API</h1>
+        <textarea id="input" placeholder="Enter text (Polish Latin or Cyrillic)"></textarea>
+        <div class="buttons">
+            <button onclick="toCyrillic()">To Cyrillic</button>
+            <button onclick="toPolish()">To Polish</button>
+            <button id="verifyButton" onclick="verifyRoundTrip()">Verify</button>
+            <button id="copyButton" onclick="copyToClipboard()">Copy Output</button>
+            <button id="clearButton" onclick="clearText()">Clear</button>
+        </div>
+        <textarea id="output" placeholder="Converted output" readonly></textarea>
+        <div id="loading" class="loading">Loading...</div>
+    </div>
+
+    <script>
+        // Replace with your actual Grok API key (obtain from ide.x.ai)
+        const GROK_API_KEY = 'xai-bZfejljvOaam9IvX2t6m8O8eUfT6XIyo6nkXbUvOp81h7rK3uUp3wksCltALUEj6P65g5qMph63uXQEF'; // Securely fetch or store this key
+        const GROK_API_URL = 'https://api.x.ai/v1'; // Placeholder; confirm exact URL from xAI docs
+
+        // Simulation data subset (simplified for demo; expand with full 10,000 pairs)
+        const SIMULATION_DATA = [
+            { polish: "Przyszedł", cyrillic: "Пшысхоу" },
+            { polish: "słuchał", cyrillic: "свуxал" },
+            { polish: "otwory", cyrillic: "отвоы" },
+            // Add more pairs as needed from the 10,000-pair simulation
+        ];
+
+        async function convertToCyrillic(text) {
+            if (!text) { alert("Please enter some text to convert."); return; }
+            showLoading(true);
+            try {
+                const response = await fetch(GROK_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${GROK_API_KEY}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        input: text,
+                        task: 'polish_to_cyrillic',
+                        examples: SIMULATION_DATA, // Use simulation data as prompt/examples
+                        normalize: true, // Handle Unicode normalization
+                        model: 'grok-3', // Assume Grok 3 is available; adjust based on docs
+                        max_tokens: 1000, // Adjust based on needs
+                    }),
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'API request failed');
+                showLoading(false);
+                return data.output || text;
+            } catch (error) {
+                console.error('Error converting to Cyrillic:', error);
+                alert('Failed to convert to Cyrillic. Check console for details.');
+                showLoading(false);
+                return text;
+            }
+        }
+
+        async function convertToPolish(text) {
+            if (!text) { alert("Please enter some text to convert."); return; }
+            showLoading(true);
+            try {
+                const response = await fetch(GROK_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${GROK_API_KEY}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        input: text,
+                        task: 'cyrillic_to_polish',
+                        examples: SIMULATION_DATA, // Use simulation data as prompt/examples
+                        normalize: true, // Handle Unicode normalization
+                        model: 'grok-3', // Assume Grok 3 is available; adjust based on docs
+                        max_tokens: 1000, // Adjust based on needs
+                    }),
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'API request failed');
+                showLoading(false);
+                return data.output || text;
+            } catch (error) {
+                console.error('Error converting to Polish:', error);
+                alert('Failed to convert to Polish. Check console for details.');
+                showLoading(false);
+                return text;
+            }
+        }
+
+        function verifyRoundTrip() {
+            const input = document.getElementById("input").value;
+            if (!input) { alert("Please enter some text to verify."); return; }
+            console.log("Starting verification for: ", input);
+            
+            convertToCyrillic(input).then(cyrillic => {
+                console.log("Cyrillic intermediate: ", cyrillic);
+                convertToPolish(cyrillic).then(polish => {
+                    console.log("Round-trip result: ", polish);
+                    document.getElementById("output").value = `To Cyrillic: ${cyrillic}\nBack to Polish: ${polish}`;
+                }).catch(error => console.error('Reverse conversion error:', error));
+            }).catch(error => console.error('Forward conversion error:', error));
+        }
+
+        function toCyrillic() {
+            const input = document.getElementById("input").value;
+            if (!input) { alert("Please enter some text to convert."); return; }
+            convertToCyrillic(input).then(output => {
+                document.getElementById("output").value = output;
+            }).catch(error => console.error('Conversion error:', error));
+        }
+
+        function toPolish() {
+            const input = document.getElementById("input").value;
+            if (!input) { alert("Please enter some text to convert."); return; }
+            convertToPolish(input).then(output => {
+                document.getElementById("output").value = output;
+            }).catch(error => console.error('Conversion error:', error));
+        }
+
+        function copyToClipboard() {
+            const output = document.getElementById("output");
+            if (!output.value) { alert("No output text to copy."); return; }
+            output.select();
+            navigator.clipboard.writeText(output.value).then(() => {
+                alert("Output copied to clipboard!");
+            }).catch(err => { alert("Failed to copy: " + err); });
+        }
+
+        function clearText() {
+            document.getElementById("input").value = "";
+            document.getElementById("output").value = "";
+        }
+
+        function showLoading(isLoading) {
+            const loading = document.getElementById("loading");
+            loading.style.display = isLoading ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>
