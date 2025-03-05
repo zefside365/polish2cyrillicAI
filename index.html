@@ -18,7 +18,7 @@
     <script>
         const GROK_API_URL = 'https://wevpywfep4.execute-api.us-east-2.amazonaws.com/prod';
 
-        // Simulation data subset (simplified; expand with your 10,000 pairs if needed)
+        // Sample simulation data (expand with your full dataset)
         const SIMULATION_DATA = [
             { polish: "Przyszedł", cyrillic: "Пшысхоу" },
             { polish: "słuchał", cyrillic: "свуxал" },
@@ -29,8 +29,13 @@
             try {
                 const response = await fetch(`${GROK_API_URL}/get-key`, {
                     method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
                 });
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch API key: ${response.status}`);
+                }
                 const data = await response.json();
                 return data.xaiApiKey;
             } catch (error) {
@@ -41,10 +46,16 @@
         }
 
         async function convertToCyrillic(text) {
-            if (!text) { alert("Please enter some text to convert."); return; }
+            if (!text) {
+                alert('Please enter some text to convert.');
+                return;
+            }
             showLoading(true);
             const apiKey = await fetchApiKey();
-            if (!apiKey) return;
+            if (!apiKey) {
+                showLoading(false);
+                return;
+            }
             try {
                 const response = await fetch(`${GROK_API_URL}/api`, {
                     method: 'POST',
@@ -61,8 +72,10 @@
                     }),
                 });
                 const data = await response.json();
-                if (!response.ok) throw new Error(data.error || 'API request failed');
-                document.getElementById('outputText').value = data.output || text;
+                if (!response.ok) {
+                    throw new Error(data.error || `API request failed: ${response.status}`);
+                }
+                document.getElementById('outputText').value = data.received?.input || text; // Adjust based on Lambda response
                 showLoading(false);
             } catch (error) {
                 console.error('Error converting to Cyrillic:', error);
@@ -72,10 +85,16 @@
         }
 
         async function convertToPolish(text) {
-            if (!text) { alert("Please enter some text to convert."); return; }
+            if (!text) {
+                alert('Please enter some text to convert.');
+                return;
+            }
             showLoading(true);
             const apiKey = await fetchApiKey();
-            if (!apiKey) return;
+            if (!apiKey) {
+                showLoading(false);
+                return;
+            }
             try {
                 const response = await fetch(`${GROK_API_URL}/api`, {
                     method: 'POST',
@@ -92,8 +111,10 @@
                     }),
                 });
                 const data = await response.json();
-                if (!response.ok) throw new Error(data.error || 'API request failed');
-                document.getElementById('outputText').value = data.output || text;
+                if (!response.ok) {
+                    throw new Error(data.error || `API request failed: ${response.status}`);
+                }
+                document.getElementById('outputText').value = data.received?.input || text; // Adjust based on Lambda response
                 showLoading(false);
             } catch (error) {
                 console.error('Error converting to Polish:', error);
