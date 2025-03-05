@@ -40,7 +40,6 @@
     <script>
         // Replace with your actual Grok API key (obtain from ide.x.ai)
         const GROK_API_URL = 'https://wevpywfep4.execute-api.us-east-2.amazonaws.com/prod';
-
         async function fetchApiKey() {
             const response = await fetch(`${GROK_API_URL}/get-key`, { method: 'GET' });
             const data = await response.json();
